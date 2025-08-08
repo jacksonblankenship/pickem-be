@@ -12,7 +12,9 @@
     "paths": {
       "@/*": ["*"]
     },
-    "sourceMap": true
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src"]
 }

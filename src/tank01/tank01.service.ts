@@ -1,0 +1,138 @@
+import { ConfigService } from '@/config/config.service';
+import axios, { AxiosError, AxiosInstance } from 'axios';
+import { inject, injectable } from 'inversify';
+import z, { ZodError } from 'zod';
+import { TANK01_TOTAL_ODDS_KEYS } from './tank01.constants';
+import {
+  ApiTank01Error,
+  MissingOddsError,
+  SchemaTank01Error,
+  UnknownTank01Error,
+} from './tank01.errors';
+import {
+  Tank01GameOdds,
+  tank01GameOddsSchema,
+  tank01GameSchema,
+  tank01Response,
+} from './tank01.schema';
+import { Tank01Game } from './tank01.types';
+
+@injectable()
+export class Tank01Service {
+  private readonly client: AxiosInstance;
+
+  constructor(
+    @inject(ConfigService) private readonly configService: ConfigService,
+  ) {
+    this.client = axios.create({
+      baseURL:
+        'https://tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com',
+      headers: {
+        'X-Rapidapi-Key': this.configService.getConfigValue('RAPID_API_KEY'),
+        'X-Rapidapi-Host': this.configService.getConfigValue('RAPID_API_HOST'),
+      },
+    });
+  }
+
+  public async getGames(params: {
+    week: number;
+    year: number;
+  }): Promise<Tank01Game[]> {
+    const response = await this.client.get<unknown>('getNFLGamesForWeek', {
+      params: {
+        week: params.week,
+        season: params.year,
+        seasonType: 'reg',
+      },
+    });
+
+    try {
+      const { body } = tank01Response(tank01GameSchema.array()).parse(
+        response.data,
+      );
+
+      return body;
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        throw new ApiTank01Error(error.message, error);
+      }
+
+      if (error instanceof ZodError) {
+        throw new SchemaTank01Error(error.message, error);
+      }
+
+      throw new UnknownTank01Error(error);
+    }
+  }
+
+  private isCompleteOdds(
+    odds: Partial<Tank01GameOdds>,
+  ): odds is Tank01GameOdds {
+    const values = Object.values(odds);
+
+    return (
+      values.every(value => value !== undefined) &&
+      values.length === TANK01_TOTAL_ODDS_KEYS
+    );
+  }
+
+  public async getGameOdds(params: {
+    tank01GameId: string;
+  }): Promise<Tank01GameOdds> {
+    const preferredSportsBooks = [
+      'bet365',
+      'fanduel',
+      'draftkings',
+      'caesars_sportsbook',
+      'betmgm',
+    ] as const;
+
+    try {
+      const response = await this.client.get<unknown>('getNFLBettingOdds', {
+        params: {
+          gameID: params.tank01GameId,
+          itemFormat: 'list',
+        },
+      });
+
+      const data = tank01Response(
+        z.interface({
+          sportsBooks: z
+            .interface({
+              sportsBook: z.string(),
+              odds: tank01GameOddsSchema.partial(),
+            })
+            .array(),
+        }),
+      ).parse(response.data);
+
+      for (const preferredSportsBook of preferredSportsBooks) {
+        const odds = data.body.sportsBooks.find(
+          ({ sportsBook }) => sportsBook === preferredSportsBook,
+        )?.odds;
+
+        if (odds === undefined) continue;
+
+        if (this.isCompleteOdds(odds)) return odds;
+      }
+
+      for (const sportsBook of data.body.sportsBooks) {
+        if (this.isCompleteOdds(sportsBook.odds)) return sportsBook.odds;
+      }
+
+      throw new MissingOddsError(
+        `No sportsbook provided complete odds for tank01 game ${params.tank01GameId}`,
+      );
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        throw new ApiTank01Error(error.message, error);
+      }
+
+      if (error instanceof ZodError) {
+        throw new SchemaTank01Error(error.message, error);
+      }
+
+      throw new UnknownTank01Error(error);
+    }
+  }
+}
