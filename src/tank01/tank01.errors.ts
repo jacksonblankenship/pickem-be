@@ -1,31 +1,17 @@
-export class ApiTank01Error extends Error {
-  constructor(message: string, cause?: unknown) {
-    super(message);
-    this.name = 'ApiTank01Error';
-    this.cause = cause;
-  }
-}
+import { AppError } from '@/errors';
 
-export class SchemaTank01Error extends Error {
-  constructor(message: string, cause?: unknown) {
-    super(message);
-    this.name = 'SchemaTank01Error';
-    this.cause = cause;
-  }
-}
+export class Tank01Error<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> extends AppError<M> {}
 
-export class UnknownTank01Error extends Error {
-  constructor(cause?: unknown) {
-    super('Unknown error occurred in Tank01Service');
-    this.name = 'UnknownTank01Error';
-    this.cause = cause;
-  }
-}
+export class Tank01ApiError<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> extends Tank01Error<M> {}
 
-export class MissingOddsError extends Error {
-  constructor(message: string, cause?: unknown) {
-    super(message);
-    this.name = 'MissingOddsError';
-    this.cause = cause;
-  }
-}
+export class Tank01SchemaError<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> extends Tank01Error<M> {}
+
+export class MissingOddsError<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> extends Tank01Error<M> {}

@@ -1,11 +1,7 @@
 import { and, DrizzleError, eq, SQL } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { inject, injectable } from 'inversify';
-import {
-  DatabaseError,
-  DatabaseNotFoundError,
-  UnknownDatabaseError,
-} from '../db.errors';
+import { GameNotFoundError, GameRepositoryError } from '../db.errors';
 import { gamesTable } from '../db.schema';
 import { DatabaseService } from '../db.service';
 
@@ -28,16 +24,24 @@ export class GameRepository {
         .limit(1);
 
       if (games.length === 0) {
-        throw new DatabaseNotFoundError(`Game with id ${id} not found`);
+        throw new GameNotFoundError('Game not found', {
+          meta: { id },
+        });
       }
 
       return games[0];
     } catch (error) {
       if (error instanceof DrizzleError) {
-        throw new DatabaseError(error.message, error);
+        throw new GameRepositoryError(error.message, {
+          cause: error,
+          meta: { id },
+        });
       }
 
-      throw new UnknownDatabaseError(error);
+      throw new GameRepositoryError('Unknown error occurred', {
+        cause: error,
+        meta: { id },
+      });
     }
   }
 
@@ -61,10 +65,16 @@ export class GameRepository {
         .where(and(...conditions));
     } catch (error) {
       if (error instanceof DrizzleError) {
-        throw new DatabaseError(error.message, error);
+        throw new GameRepositoryError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
-      throw new UnknownDatabaseError(error);
+      throw new GameRepositoryError('Unknown error occurred', {
+        cause: error,
+        meta: params,
+      });
     }
   }
 
@@ -84,10 +94,16 @@ export class GameRepository {
         });
     } catch (error) {
       if (error instanceof DrizzleError) {
-        throw new DatabaseError(error.message, error);
+        throw new GameRepositoryError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
-      throw new UnknownDatabaseError(error);
+      throw new GameRepositoryError('Unknown error occurred', {
+        cause: error,
+        meta: params,
+      });
     }
   }
 }

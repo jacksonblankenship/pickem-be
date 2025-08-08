@@ -1,7 +1,7 @@
 import { DrizzleError } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { inject, injectable } from 'inversify';
-import { DatabaseError, UnknownDatabaseError } from '../db.errors';
+import { BetOptionRepositoryError } from '../db.errors';
 import { betOptionsTable } from '../db.schema';
 import { DatabaseService } from '../db.service';
 
@@ -35,10 +35,16 @@ export class BetOptionRepository {
         });
     } catch (error) {
       if (error instanceof DrizzleError) {
-        throw new DatabaseError(error.message, error);
+        throw new BetOptionRepositoryError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
-      throw new UnknownDatabaseError(error);
+      throw new BetOptionRepositoryError('Unknown error occurred', {
+        cause: error,
+        meta: params,
+      });
     }
   }
 }

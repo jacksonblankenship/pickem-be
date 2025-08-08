@@ -1,11 +1,7 @@
 import { DrizzleError, eq } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { inject, injectable } from 'inversify';
-import {
-  DatabaseError,
-  DatabaseNotFoundError,
-  UnknownDatabaseError,
-} from '../db.errors';
+import { TeamNotFoundError, TeamRepositoryError } from '../db.errors';
 import { teamsTable } from '../db.schema';
 import { DatabaseService } from '../db.service';
 
@@ -29,16 +25,24 @@ export class TeamRepository {
         .where(eq(teamsTable.abbr, abbr));
 
       if (teams.length === 0) {
-        throw new DatabaseNotFoundError(`Team with abbr ${abbr} not found`);
+        throw new TeamNotFoundError(`Team with abbr ${abbr} not found`, {
+          meta: { abbr },
+        });
       }
 
       return teams[0];
     } catch (error) {
       if (error instanceof DrizzleError) {
-        throw new DatabaseError(error.message, error);
+        throw new TeamRepositoryError(error.message, {
+          cause: error,
+          meta: { abbr },
+        });
       }
 
-      throw new UnknownDatabaseError(error);
+      throw new TeamRepositoryError('Unknown error occurred', {
+        cause: error,
+        meta: { abbr },
+      });
     }
   }
 }

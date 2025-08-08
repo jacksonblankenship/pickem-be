@@ -4,10 +4,10 @@ import { inject, injectable } from 'inversify';
 import z, { ZodError } from 'zod';
 import { TANK01_TOTAL_ODDS_KEYS } from './tank01.constants';
 import {
-  ApiTank01Error,
   MissingOddsError,
-  SchemaTank01Error,
-  UnknownTank01Error,
+  Tank01ApiError,
+  Tank01Error,
+  Tank01SchemaError,
 } from './tank01.errors';
 import {
   Tank01GameOdds,
@@ -54,14 +54,23 @@ export class Tank01Service {
       return body;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        throw new ApiTank01Error(error.message, error);
+        throw new Tank01ApiError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
       if (error instanceof ZodError) {
-        throw new SchemaTank01Error(error.message, error);
+        throw new Tank01SchemaError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
-      throw new UnknownTank01Error(error);
+      throw new Tank01Error('Unknown error occurred', {
+        cause: error,
+        meta: params,
+      });
     }
   }
 
@@ -125,14 +134,23 @@ export class Tank01Service {
       );
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        throw new ApiTank01Error(error.message, error);
+        throw new Tank01ApiError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
       if (error instanceof ZodError) {
-        throw new SchemaTank01Error(error.message, error);
+        throw new Tank01SchemaError(error.message, {
+          cause: error,
+          meta: params,
+        });
       }
 
-      throw new UnknownTank01Error(error);
+      throw new Tank01Error('Unknown error occurred', {
+        cause: error,
+        meta: params,
+      });
     }
   }
 }
