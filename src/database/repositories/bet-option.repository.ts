@@ -1,13 +1,13 @@
 import { DrizzleError } from 'drizzle-orm';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { inject, injectable } from 'inversify';
 import { BetOptionRepositoryError } from '../db.errors';
 import { betOptionsTable } from '../db.schema';
 import { DatabaseService } from '../db.service';
+import { Database } from '../db.types';
 
 @injectable()
 export class BetOptionRepository {
-  private readonly db: PostgresJsDatabase;
+  private readonly db: Database;
 
   constructor(
     @inject(DatabaseService) private readonly databaseService: DatabaseService,

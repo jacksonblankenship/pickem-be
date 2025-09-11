@@ -6,13 +6,17 @@ import { Tank01GameStatusCode } from '@/tank01/tank01.schema';
 import { Tank01Service } from '@/tank01/tank01.service';
 import { epochToUtcDate } from '@/utils';
 import { inject, injectable } from 'inversify';
+import { GameDataSyncError } from './game-data-sync.errors';
 
 @injectable()
 export class GameDataSyncService {
   constructor(
-    @inject(Tank01Service) private readonly tank01Service: Tank01Service,
-    @inject(TeamRepository) private readonly teamRepository: TeamRepository,
-    @inject(GameRepository) private readonly gameRepository: GameRepository,
+    @inject(Tank01Service)
+    private readonly tank01Service: Tank01Service,
+    @inject(TeamRepository)
+    private readonly teamRepository: TeamRepository,
+    @inject(GameRepository)
+    private readonly gameRepository: GameRepository,
     @inject(BetOptionRepository)
     private readonly betOptionRepository: BetOptionRepository,
   ) {}
@@ -22,30 +26,34 @@ export class GameDataSyncService {
    * @param params - Object containing the year to initialize
    * @param params.year - The NFL season year to initialize
    */
-  public async initializeSeason(params: { year: number }) {
-    for (let currentWeek = 1; currentWeek <= 18; currentWeek++) {
-      const tank01Games = await this.tank01Service.getGames({
-        year: params.year,
-        week: currentWeek,
-      });
-
-      for (const tank01Game of tank01Games) {
-        const awayTeam = await this.teamRepository.getTeamByAbbr(
-          tank01Game.away,
-        );
-
-        const homeTeam = await this.teamRepository.getTeamByAbbr(
-          tank01Game.home,
-        );
-
-        await this.gameRepository.upsertGame({
-          external_id: tank01Game.gameID,
+  public async importSeasonGames(params: { year: number }) {
+    try {
+      for (let currentWeek = 1; currentWeek <= 18; currentWeek++) {
+        const tank01Games = await this.tank01Service.getGames({
           year: params.year,
           week: currentWeek,
-          home_team_id: homeTeam.id,
-          away_team_id: awayTeam.id,
         });
+
+        for (const tank01Game of tank01Games) {
+          const awayTeam = await this.teamRepository.getTeamByAbbr(
+            tank01Game.away,
+          );
+
+          const homeTeam = await this.teamRepository.getTeamByAbbr(
+            tank01Game.home,
+          );
+
+          await this.gameRepository.upsertGame({
+            external_id: tank01Game.gameID,
+            year: params.year,
+            week: currentWeek,
+            home_team_id: homeTeam.id,
+            away_team_id: awayTeam.id,
+          });
+        }
       }
+    } catch (error) {
+      throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
 
@@ -55,32 +63,36 @@ export class GameDataSyncService {
    * @param params.year - The NFL season year
    * @param params.week - The week number (1-18)
    */
-  public async updateGameData(params: { year: number; week: number }) {
-    const dbGames = await this.gameRepository.getGames({
-      year: params.year,
-      week: params.week,
-    });
-
-    for (const dbGame of dbGames) {
-      const tank01GameStatus = await this.tank01Service.getGameStatus({
-        tank01GameId: dbGame.external_id,
+  public async syncGameData(params: { year: number; week: number }) {
+    try {
+      const dbGames = await this.gameRepository.getGames({
+        year: params.year,
+        week: params.week,
       });
 
-      await this.gameRepository.upsertGame({
-        away_team_id: dbGame.away_team_id,
-        home_team_id: dbGame.home_team_id,
-        external_id: dbGame.external_id,
-        year: dbGame.year,
-        week: dbGame.week,
-        home_team_score: tank01GameStatus.homePts,
-        away_team_score: tank01GameStatus.awayPts,
-        date: tank01GameStatus.gameTime_epoch
-          ? epochToUtcDate(tank01GameStatus.gameTime_epoch)
-          : null,
-        game_status: this.tank01GameStatusCodeToGameStatus(
-          tank01GameStatus.gameStatusCode,
-        ),
-      });
+      for (const dbGame of dbGames) {
+        const tank01GameStatus = await this.tank01Service.getGameStatus({
+          tank01GameId: dbGame.external_id,
+        });
+
+        await this.gameRepository.upsertGame({
+          away_team_id: dbGame.away_team_id,
+          home_team_id: dbGame.home_team_id,
+          external_id: dbGame.external_id,
+          year: dbGame.year,
+          week: dbGame.week,
+          home_team_score: tank01GameStatus.homePts,
+          away_team_score: tank01GameStatus.awayPts,
+          date: tank01GameStatus.gameTime_epoch
+            ? epochToUtcDate(tank01GameStatus.gameTime_epoch)
+            : null,
+          game_status: this.tank01GameStatusCodeToGameStatus(
+            tank01GameStatus.gameStatusCode,
+          ),
+        });
+      }
+    } catch (error) {
+      throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
 
@@ -90,52 +102,75 @@ export class GameDataSyncService {
    * @param params.year - The NFL season year
    * @param params.week - The week number (1-18)
    */
-  public async initializeWeekOdds(params: { year: number; week: number }) {
-    await this.updateGameData({ year: params.year, week: params.week });
-
-    const dbGames = await this.gameRepository.getGames({
-      year: params.year,
-      week: params.week,
-    });
-
-    for (const dbGame of dbGames) {
-      const tank01GameOdds = await this.tank01Service.getGameOdds({
-        tank01GameId: dbGame.external_id,
+  public async importBettingOptions(params: { year: number; week: number }) {
+    try {
+      const dbGames = await this.gameRepository.getGames({
+        year: params.year,
+        week: params.week,
       });
 
-      await Promise.all([
-        this.betOptionRepository.insertBetOption({
-          game_id: dbGame.id,
-          line: tank01GameOdds.awayTeamSpread,
-          odds: tank01GameOdds.awayTeamSpreadOdds,
-          target: 'away',
-          type: 'spread',
-        }),
+      for (const dbGame of dbGames) {
+        const tank01GameOdds = await this.tank01Service.getGameOdds({
+          tank01GameId: dbGame.external_id,
+        });
 
-        this.betOptionRepository.insertBetOption({
-          game_id: dbGame.id,
-          line: tank01GameOdds.homeTeamSpread,
-          odds: tank01GameOdds.homeTeamSpreadOdds,
-          target: 'home',
-          type: 'spread',
-        }),
+        await Promise.all([
+          this.betOptionRepository.insertBetOption({
+            game_id: dbGame.id,
+            line: tank01GameOdds.awayTeamSpread,
+            odds: tank01GameOdds.awayTeamSpreadOdds,
+            target: 'away',
+            type: 'spread',
+          }),
 
-        this.betOptionRepository.insertBetOption({
-          game_id: dbGame.id,
-          line: tank01GameOdds.totalOver,
-          odds: tank01GameOdds.totalOverOdds,
-          target: 'over',
-          type: 'total',
-        }),
+          this.betOptionRepository.insertBetOption({
+            game_id: dbGame.id,
+            line: tank01GameOdds.homeTeamSpread,
+            odds: tank01GameOdds.homeTeamSpreadOdds,
+            target: 'home',
+            type: 'spread',
+          }),
 
-        this.betOptionRepository.insertBetOption({
-          game_id: dbGame.id,
-          line: tank01GameOdds.totalUnder,
-          odds: tank01GameOdds.totalUnderOdds,
-          target: 'under',
-          type: 'total',
-        }),
-      ]);
+          this.betOptionRepository.insertBetOption({
+            game_id: dbGame.id,
+            line: tank01GameOdds.totalOver,
+            odds: tank01GameOdds.totalOverOdds,
+            target: 'over',
+            type: 'total',
+          }),
+
+          this.betOptionRepository.insertBetOption({
+            game_id: dbGame.id,
+            line: tank01GameOdds.totalUnder,
+            odds: tank01GameOdds.totalUnderOdds,
+            target: 'under',
+            type: 'total',
+          }),
+        ]);
+      }
+    } catch (error) {
+      throw new GameDataSyncError('Unknown error occurred', { cause: error });
+    }
+  }
+
+  /**
+   * Initializes all NFL teams by fetching team data from Tank01 and storing them in the database.
+   */
+  public async importTeams() {
+    try {
+      const tank01Teams = await this.tank01Service.getTeams();
+
+      for (const tank01Team of tank01Teams) {
+        await this.teamRepository.upsertTeam({
+          abbr: tank01Team.teamAbv,
+          name: tank01Team.teamName,
+          conference: tank01Team.conference,
+          conference_abbr: tank01Team.conferenceAbv,
+          division: tank01Team.division,
+        });
+      }
+    } catch (error) {
+      throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
 

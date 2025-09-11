@@ -1,0 +1,1 @@
+ALTER TYPE "public"."pick_status" ADD VALUE 'push';

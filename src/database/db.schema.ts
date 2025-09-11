@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   integer,
   numeric,
@@ -37,7 +37,12 @@ export const gameStatusEnum = pgEnum('game_status', [
   'suspended',
 ]);
 
-export const pickStatusEnum = pgEnum('pick_status', ['pending', 'won', 'lost']);
+export const pickStatusEnum = pgEnum('pick_status', [
+  'pending',
+  'won',
+  'lost',
+  'push',
+]);
 
 export const teamsTable = pgTable(
   'teams',
@@ -121,7 +126,9 @@ export const picksTable = pgTable(
       .notNull()
       .default(sql`auth.uid()`)
       .references(() => authUsers.id),
-    bet_option_id: integer().references(() => betOptionsTable.id),
+    bet_option_id: integer()
+      .notNull()
+      .references(() => betOptionsTable.id),
     status: pickStatusEnum().notNull().default('pending'),
   },
   t => [
@@ -138,3 +145,48 @@ export const picksTable = pgTable(
     }),
   ],
 ).enableRLS();
+
+export const gamesRelations = relations(gamesTable, ({ one, many }) => ({
+  homeTeam: one(teamsTable, {
+    fields: [gamesTable.home_team_id],
+    references: [teamsTable.id],
+    relationName: 'homeTeam',
+  }),
+  awayTeam: one(teamsTable, {
+    fields: [gamesTable.away_team_id],
+    references: [teamsTable.id],
+    relationName: 'awayTeam',
+  }),
+  betOptions: many(betOptionsTable),
+}));
+
+export const teamsRelations = relations(teamsTable, ({ many }) => ({
+  homeGames: many(gamesTable, { relationName: 'homeTeam' }),
+  awayGames: many(gamesTable, { relationName: 'awayTeam' }),
+}));
+
+export const betOptionsRelations = relations(
+  betOptionsTable,
+  ({ one, many }) => ({
+    game: one(gamesTable, {
+      fields: [betOptionsTable.game_id],
+      references: [gamesTable.id],
+    }),
+    picks: many(picksTable),
+  }),
+);
+
+export const picksRelations = relations(picksTable, ({ one }) => ({
+  user: one(authUsers, {
+    fields: [picksTable.user_id],
+    references: [authUsers.id],
+  }),
+  betOption: one(betOptionsTable, {
+    fields: [picksTable.bet_option_id],
+    references: [betOptionsTable.id],
+  }),
+}));
+
+export const usersRelations = relations(authUsers, ({ many }) => ({
+  picks: many(picksTable),
+}));

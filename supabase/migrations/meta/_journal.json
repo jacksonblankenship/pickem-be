@@ -22,6 +22,20 @@
       "when": 1757444592664,
       "tag": "0002_flippant_ben_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757609117042,
+      "tag": "0003_thankful_dagger",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1757626162713,
+      "tag": "0004_whole_snowbird",
+      "breakpoints": true
     }
   ]
 }
