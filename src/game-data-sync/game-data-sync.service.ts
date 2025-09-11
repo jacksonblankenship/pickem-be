@@ -10,9 +10,12 @@ import { inject, injectable } from 'inversify';
 @injectable()
 export class GameDataSyncService {
   constructor(
-    @inject(Tank01Service) private readonly tank01Service: Tank01Service,
-    @inject(TeamRepository) private readonly teamRepository: TeamRepository,
-    @inject(GameRepository) private readonly gameRepository: GameRepository,
+    @inject(Tank01Service)
+    private readonly tank01Service: Tank01Service,
+    @inject(TeamRepository)
+    private readonly teamRepository: TeamRepository,
+    @inject(GameRepository)
+    private readonly gameRepository: GameRepository,
     @inject(BetOptionRepository)
     private readonly betOptionRepository: BetOptionRepository,
   ) {}
@@ -91,8 +94,6 @@ export class GameDataSyncService {
    * @param params.week - The week number (1-18)
    */
   public async initializeWeekOdds(params: { year: number; week: number }) {
-    await this.updateGameData({ year: params.year, week: params.week });
-
     const dbGames = await this.gameRepository.getGames({
       year: params.year,
       week: params.week,
@@ -136,6 +137,23 @@ export class GameDataSyncService {
           type: 'total',
         }),
       ]);
+    }
+  }
+
+  /**
+   * Initializes all NFL teams by fetching team data from Tank01 and storing them in the database.
+   */
+  public async initializeTeams() {
+    const tank01Teams = await this.tank01Service.getTeams();
+
+    for (const tank01Team of tank01Teams) {
+      await this.teamRepository.upsertTeam({
+        abbr: tank01Team.teamAbv,
+        name: tank01Team.teamName,
+        conference: tank01Team.conference,
+        conference_abbr: tank01Team.conferenceAbv,
+        division: tank01Team.division,
+      });
     }
   }
 
