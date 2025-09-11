@@ -53,7 +53,12 @@ export class TeamRepository {
         .values(params)
         .onConflictDoUpdate({
           target: [teamsTable.abbr],
-          set: params,
+          set: {
+            name: params.name,
+            conference: params.conference,
+            conference_abbr: params.conference_abbr,
+            division: params.division,
+          },
         });
     } catch (error) {
       if (error instanceof DrizzleError) {
