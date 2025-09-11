@@ -3577,6 +3577,15 @@ values
     'scheduled'
   );
 
+-- randomly assign dates to the games
+update public.games
+set
+  date = case
+    when week = 1 then CURRENT_DATE - 7
+    when week = 2 then CURRENT_DATE + (CAST((random () * 4 - 2) AS INT))
+    else date
+  end;
+
 insert into
   public.bet_options (game_id, type, target, line, odds)
 values
