@@ -4,12 +4,12 @@
     "build": "rollup --config",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "dev": "tsx --require dotenv/config ./src/index.ts dotenv_config_path=./.env",
+    "dev": "tsx --require dotenv/config --env-file .env.development ./src/index.ts dotenv_config_path=./.env",
     "preinstall": "npx only-allow pnpm",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
-    "start": "node --require dotenv/config ./dist/index.js dotenv_config_path=./.env"
+    "prod": "tsx --require dotenv/config --env-file .env.production ./src/index.ts dotenv_config_path=./.env"
   },
   "dependencies": {
     "@date-fns/utc": "^2.1.0",
