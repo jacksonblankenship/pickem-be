@@ -1,5 +1,5 @@
-INSERT INTO
-  auth.users (
+-- insert users
+INSERT INTO auth.users (
     instance_id,
     id,
     aud,
@@ -18,8 +18,7 @@ INSERT INTO
     email_change_token_new,
     recovery_token
   ) (
-    select
-      '00000000-0000-0000-0000-000000000000',
+    select '00000000-0000-0000-0000-000000000000',
       uuid_generate_v4 (),
       'authenticated',
       'authenticated',
@@ -36,12 +35,10 @@ INSERT INTO
       '',
       '',
       ''
-    FROM
-      generate_series (1, 10)
+    FROM generate_series (1, 10)
   );
-
-INSERT INTO
-  auth.identities (
+-- insert identities
+INSERT INTO auth.identities (
     id,
     user_id,
     identity_data,
@@ -51,8 +48,7 @@ INSERT INTO
     created_at,
     updated_at
   ) (
-    select
-      uuid_generate_v4 (),
+    select uuid_generate_v4 (),
       id,
       CAST(
         format (
@@ -66,14 +62,17 @@ INSERT INTO
       current_timestamp,
       current_timestamp,
       current_timestamp
-    from
-      auth.users
+    from auth.users
   );
-
-insert into
-  public.teams (name, abbr, conference, conference_abbr, division)
-values
-  (
+-- insert teams
+insert into public.teams (
+    name,
+    abbr,
+    conference,
+    conference_abbr,
+    division
+  )
+values (
     'Cardinals',
     'ARI',
     'National Football Conference',
@@ -297,9 +296,8 @@ values
     'NFC',
     'East'
   );
-
-insert into
-  public.games (
+-- insert games
+insert into public.games (
     external_id,
     year,
     week,
@@ -311,8 +309,7 @@ insert into
     game_status,
     system_status
   )
-values
-  (
+values (
     '20240905_BAL@KC',
     2024,
     1,
@@ -3576,20 +3573,9 @@ values
     'not-started',
     'scheduled'
   );
-
--- randomly assign dates to the games
-update public.games
-set
-  date = case
-    when week = 1 then CURRENT_DATE - 7
-    when week = 2 then CURRENT_DATE + (CAST((random () * 4 - 2) AS INT))
-    else date
-  end;
-
-insert into
-  public.bet_options (game_id, type, target, line, odds)
-values
-  (14, 'spread', 'home', 1, -115),
+-- insert bet options
+insert into public.bet_options (game_id, type, target, line, odds)
+values (14, 'spread', 'home', 1, -115),
   (14, 'total', 'over', 47.5, -110),
   (14, 'spread', 'away', -1, -105),
   (14, 'total', 'under', 47.5, -110),
@@ -3717,3 +3703,79 @@ values
   (25, 'total', 'over', 41.5, -110),
   (29, 'spread', 'home', -3, -105),
   (25, 'spread', 'home', 5.5, -110);
+-- randomly assign dates to the games
+update public.games
+set date = case
+    when week = 1 then CURRENT_DATE - 7
+    when week = 2 then CURRENT_DATE + (CAST((random () * 4 - 2) AS INT))
+    else date
+  end;
+-- randomly assign picks for each user
+DO $$
+DECLARE u RECORD;
+BEGIN FOR u IN
+SELECT id
+FROM auth.users LOOP WITH favorite AS (
+    SELECT bo.id,
+      g.id AS game_id
+    FROM bet_options bo
+      JOIN games g ON bo.game_id = g.id
+    WHERE g.week = 1
+      AND bo.type = 'spread'
+      AND bo.line < 0
+    ORDER BY RANDOM()
+    LIMIT 1
+  ), underdog AS (
+    SELECT bo.id
+    FROM bet_options bo
+      JOIN games g ON bo.game_id = g.id
+    WHERE g.week = 1
+      AND bo.type = 'spread'
+      AND bo.line > 0
+      AND g.id NOT IN (
+        SELECT game_id
+        FROM favorite
+      )
+    ORDER BY RANDOM()
+    LIMIT 1
+  ), total AS (
+    SELECT bo.id
+    FROM bet_options bo
+      JOIN games g ON bo.game_id = g.id
+    WHERE g.week = 1
+      AND bo.type = 'total'
+    ORDER BY RANDOM()
+    LIMIT 1
+  )
+INSERT INTO picks (user_id, bet_option_id, status)
+SELECT u.id,
+  id,
+  (
+    CASE
+      WHEN random() < 0.5 THEN 'won'
+      ELSE 'lost'
+    END
+  )::pick_status
+FROM favorite
+UNION ALL
+SELECT u.id,
+  id,
+  (
+    CASE
+      WHEN random() < 0.5 THEN 'won'
+      ELSE 'lost'
+    END
+  )::pick_status
+FROM underdog
+UNION ALL
+SELECT u.id,
+  id,
+  (
+    CASE
+      WHEN random() < 0.5 THEN 'won'
+      ELSE 'lost'
+    END
+  )::pick_status
+FROM total;
+END LOOP;
+END $$;
