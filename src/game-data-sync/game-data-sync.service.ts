@@ -1,6 +1,8 @@
+import { gameStatusEnum } from '@/database/db.schema';
 import { BetOptionRepository } from '@/database/repositories/bet-option.repository';
 import { GameRepository } from '@/database/repositories/game.repository';
 import { TeamRepository } from '@/database/repositories/team.repository';
+import { Tank01GameStatusCode } from '@/tank01/tank01.schema';
 import { Tank01Service } from '@/tank01/tank01.service';
 import { epochToUtcDate } from '@/utils';
 import { inject, injectable } from 'inversify';
@@ -15,7 +17,12 @@ export class GameDataSyncService {
     private readonly betOptionRepository: BetOptionRepository,
   ) {}
 
-  public async syncGames(params: { year: number }) {
+  /**
+   * Initializes a complete NFL season by fetching and storing all games for weeks 1-18.
+   * @param params - Object containing the year to initialize
+   * @param params.year - The NFL season year to initialize
+   */
+  public async initializeSeason(params: { year: number }) {
     for (let currentWeek = 1; currentWeek <= 18; currentWeek++) {
       const tank01Games = await this.tank01Service.getGames({
         year: params.year,
@@ -35,7 +42,6 @@ export class GameDataSyncService {
           external_id: tank01Game.gameID,
           year: params.year,
           week: currentWeek,
-          date: epochToUtcDate(tank01Game.gameTime_epoch),
           home_team_id: homeTeam.id,
           away_team_id: awayTeam.id,
         });
@@ -43,7 +49,50 @@ export class GameDataSyncService {
     }
   }
 
-  public async syncOdds(params: { year: number; week: number }) {
+  /**
+   * Updates game data including scores, dates, and status for all games in a specific week.
+   * @param params - Object containing the year and week to update
+   * @param params.year - The NFL season year
+   * @param params.week - The week number (1-18)
+   */
+  public async updateGameData(params: { year: number; week: number }) {
+    const dbGames = await this.gameRepository.getGames({
+      year: params.year,
+      week: params.week,
+    });
+
+    for (const dbGame of dbGames) {
+      const tank01GameStatus = await this.tank01Service.getGameStatus({
+        tank01GameId: dbGame.external_id,
+      });
+
+      await this.gameRepository.upsertGame({
+        away_team_id: dbGame.away_team_id,
+        home_team_id: dbGame.home_team_id,
+        external_id: dbGame.external_id,
+        year: dbGame.year,
+        week: dbGame.week,
+        home_team_score: tank01GameStatus.homePts,
+        away_team_score: tank01GameStatus.awayPts,
+        date: tank01GameStatus.gameTime_epoch
+          ? epochToUtcDate(tank01GameStatus.gameTime_epoch)
+          : null,
+        game_status: this.tank01GameStatusCodeToGameStatus(
+          tank01GameStatus.gameStatusCode,
+        ),
+      });
+    }
+  }
+
+  /**
+   * Initializes betting odds for all games in a specific week, including spread and total bets.
+   * @param params - Object containing the year and week to initialize odds for
+   * @param params.year - The NFL season year
+   * @param params.week - The week number (1-18)
+   */
+  public async initializeWeekOdds(params: { year: number; week: number }) {
+    await this.updateGameData({ year: params.year, week: params.week });
+
     const dbGames = await this.gameRepository.getGames({
       year: params.year,
       week: params.week,
@@ -87,6 +136,25 @@ export class GameDataSyncService {
           type: 'total',
         }),
       ]);
+    }
+  }
+
+  private tank01GameStatusCodeToGameStatus(
+    tank01GameStatusCode: Tank01GameStatusCode,
+  ): (typeof gameStatusEnum)['enumValues'][number] {
+    switch (tank01GameStatusCode) {
+      case Tank01GameStatusCode.NotStarted:
+        return 'not-started';
+      case Tank01GameStatusCode.InProgress:
+        return 'in-progress';
+      case Tank01GameStatusCode.Completed:
+        return 'completed';
+      case Tank01GameStatusCode.Postponed:
+        return 'postponed';
+      case Tank01GameStatusCode.Suspended:
+        return 'suspended';
+      default:
+        return 'not-started';
     }
   }
 }

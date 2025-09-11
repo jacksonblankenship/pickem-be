@@ -3,12 +3,15 @@ import {
   integer,
   numeric,
   pgEnum,
+  pgPolicy,
   pgTable,
   text,
   timestamp,
   unique,
+  uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { authenticatedRole, authUid, authUsers } from 'drizzle-orm/supabase';
 
 export const betTypeEnum = pgEnum('bet_type', ['spread', 'total']);
 
@@ -36,14 +39,25 @@ export const gameStatusEnum = pgEnum('game_status', [
 
 export const pickStatusEnum = pgEnum('pick_status', ['pending', 'won', 'lost']);
 
-export const teamsTable = pgTable('teams', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  abbr: varchar({ length: 3 }).notNull(),
-  conference: varchar({ length: 255 }).notNull(),
-  conference_abbr: varchar({ length: 3 }).notNull(),
-  division: varchar({ length: 255 }).notNull(),
-});
+export const teamsTable = pgTable(
+  'teams',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    name: varchar({ length: 255 }).notNull(),
+    abbr: varchar({ length: 3 }).notNull(),
+    conference: varchar({ length: 255 }).notNull(),
+    conference_abbr: varchar({ length: 3 }).notNull(),
+    division: varchar({ length: 255 }).notNull(),
+  },
+  t => [
+    unique().on(t.abbr),
+    pgPolicy('Allow all authenticated users to read teams', {
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`true`,
+    }),
+  ],
+).enableRLS();
 
 export const gamesTable = pgTable(
   'games',
@@ -53,7 +67,7 @@ export const gamesTable = pgTable(
     createdAt: timestamp().notNull().defaultNow(),
     year: integer().notNull(),
     week: integer().notNull(),
-    date: timestamp().notNull(),
+    date: timestamp({ withTimezone: true }),
     home_team_id: integer()
       .references(() => teamsTable.id)
       .notNull(),
@@ -65,8 +79,15 @@ export const gamesTable = pgTable(
     game_status: gameStatusEnum().notNull().default('not-started'),
     system_status: systemStatusEnum().notNull().default('scheduled'),
   },
-  t => [unique().on(t.year, t.week, t.home_team_id, t.away_team_id)],
-);
+  t => [
+    unique().on(t.year, t.week, t.home_team_id, t.away_team_id),
+    pgPolicy('Allow all authenticated users to read games', {
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`true`,
+    }),
+  ],
+).enableRLS();
 
 export const betOptionsTable = pgTable(
   'bet_options',
@@ -81,18 +102,39 @@ export const betOptionsTable = pgTable(
     line: numeric({ mode: 'number' }).notNull(),
     odds: numeric({ mode: 'number' }).notNull(),
   },
-  t => [unique().on(t.game_id, t.type, t.target)],
-);
+  t => [
+    unique().on(t.game_id, t.type, t.target),
+    pgPolicy('Allow all authenticated users to read bet options', {
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`true`,
+    }),
+  ],
+).enableRLS();
 
 export const picksTable = pgTable(
   'picks',
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     createdAt: timestamp().notNull().defaultNow(),
-    user_id: text()
+    user_id: uuid()
       .notNull()
-      .default(sql`auth.jwt()->>'sub'`),
+      .default(sql`auth.uid()`)
+      .references(() => authUsers.id),
     bet_option_id: integer().references(() => betOptionsTable.id),
+    status: pickStatusEnum().notNull().default('pending'),
   },
-  t => [unique().on(t.user_id, t.bet_option_id)],
+  t => [
+    unique().on(t.user_id, t.bet_option_id),
+    pgPolicy('Enable users to view their own data only', {
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`${t.user_id} = ${authUid}`,
+    }),
+    pgPolicy('Enable insert for users based on user_id', {
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`${t.user_id} = ${authUid}`,
+    }),
+  ],
 ).enableRLS();

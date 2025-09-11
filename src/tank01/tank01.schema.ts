@@ -50,11 +50,17 @@ export enum Tank01GameStatusCode {
   Suspended = '4',
 }
 
+const gameTimeEpochSchema = z.preprocess(val => {
+  if (val === null || val === undefined || val === '') return null;
+  const num = Number(val);
+  return Number.isFinite(num) ? num : null;
+}, z.number().nullable());
+
 export const tank01GameSchema = z.interface({
   gameID: z.string(),
   home: tank01TeamEnum,
   away: tank01TeamEnum,
-  gameTime_epoch: z.coerce.number(),
+  gameTime_epoch: gameTimeEpochSchema,
 });
 
 export type Tank01Game = z.infer<typeof tank01GameSchema>;
@@ -63,6 +69,7 @@ export const tank01GameStatusSchema = z.interface({
   awayPts: z.coerce.number(),
   homePts: z.coerce.number(),
   gameStatusCode: z.enum(Tank01GameStatusCode),
+  gameTime_epoch: gameTimeEpochSchema,
 });
 
 export type Tank01GameStatus = z.infer<typeof tank01GameStatusSchema>;
@@ -100,3 +107,13 @@ export const tank01GameOddsSchema = z.interface({
 });
 
 export type Tank01GameOdds = z.infer<typeof tank01GameOddsSchema>;
+
+export const tank01TeamSchema = z.interface({
+  teamAbv: tank01TeamEnum,
+  teamName: z.string(),
+  division: z.string(),
+  conferenceAbv: z.string(),
+  conference: z.string(),
+});
+
+export type Tank01Team = z.infer<typeof tank01TeamSchema>;

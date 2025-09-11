@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "build": "rollup --config",
-    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "dev": "tsx --require dotenv/config ./src/index.ts dotenv_config_path=./.env",
     "preinstall": "npx only-allow pnpm",
     "lint": "eslint .",
@@ -11,21 +12,13 @@
     "start": "node --require dotenv/config ./dist/index.js dotenv_config_path=./.env"
   },
   "dependencies": {
-    "@date-fns/tz": "^1.2.0",
     "@date-fns/utc": "^2.1.0",
-    "@t3-oss/env-core": "^0.12.0",
     "axios": "^1.8.4",
-    "bullmq": "^5.48.1",
     "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0",
     "drizzle-orm": "^0.41.0",
-    "fastify": "^5.2.2",
     "inversify": "^7.7.0",
-    "ioredis": "^5.6.1",
     "postgres": "^3.4.5",
-    "redaxios": "^0.5.1",
     "reflect-metadata": "^0.2.2",
-    "remeda": "^2.21.2",
     "zod": "4.0.0-beta.20250411T195319"
   },
   "devDependencies": {

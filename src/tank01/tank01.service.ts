@@ -13,7 +13,11 @@ import {
   Tank01GameOdds,
   tank01GameOddsSchema,
   tank01GameSchema,
+  Tank01GameStatus,
+  tank01GameStatusSchema,
   tank01Response,
+  Tank01Team,
+  tank01TeamSchema,
 } from './tank01.schema';
 import { Tank01Game } from './tank01.types';
 
@@ -85,6 +89,44 @@ export class Tank01Service {
     );
   }
 
+  public async getGameStatus(params: {
+    tank01GameId: string;
+  }): Promise<Tank01GameStatus> {
+    try {
+      const response = await this.client.get<unknown>('getNFLScoresOnly', {
+        params: {
+          gameID: params.tank01GameId,
+          topPerformers: 'false',
+        },
+      });
+
+      const { body } = tank01Response(
+        z.record(z.literal(params.tank01GameId), tank01GameStatusSchema),
+      ).parse(response.data);
+
+      return body[params.tank01GameId];
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        throw new Tank01ApiError(error.message, {
+          cause: error,
+          meta: params,
+        });
+      }
+
+      if (error instanceof ZodError) {
+        throw new Tank01SchemaError(error.message, {
+          cause: error,
+          meta: params,
+        });
+      }
+
+      throw new Tank01Error('Unknown error occurred', {
+        cause: error,
+        meta: params,
+      });
+    }
+  }
+
   public async getGameOdds(params: {
     tank01GameId: string;
   }): Promise<Tank01GameOdds> {
@@ -150,6 +192,34 @@ export class Tank01Service {
       throw new Tank01Error('Unknown error occurred', {
         cause: error,
         meta: params,
+      });
+    }
+  }
+
+  public async getTeams(): Promise<Tank01Team[]> {
+    try {
+      const response = await this.client.get<unknown>('getNFLTeams');
+
+      const { body } = tank01Response(tank01TeamSchema.array()).parse(
+        response.data,
+      );
+
+      return body;
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        throw new Tank01ApiError(error.message, {
+          cause: error,
+        });
+      }
+
+      if (error instanceof ZodError) {
+        throw new Tank01SchemaError(error.message, {
+          cause: error,
+        });
+      }
+
+      throw new Tank01Error('Unknown error occurred', {
+        cause: error,
       });
     }
   }
