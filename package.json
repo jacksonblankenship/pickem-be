@@ -39,8 +39,7 @@
     "typescript": "5.8.3",
     "typescript-eslint": "^8.29.0"
   },
-  "packageManager": "pnpm@10.4.0+sha1.896bdea7e92d0a37e53829d6ec47871e5c750419",
   "engines": {
-    "node": "22.8.0"
+    "node": "22"
   }
 }
