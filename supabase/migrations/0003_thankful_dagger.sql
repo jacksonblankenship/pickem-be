@@ -1,0 +1,1 @@
+ALTER TABLE "picks" ALTER COLUMN "bet_option_id" SET NOT NULL;

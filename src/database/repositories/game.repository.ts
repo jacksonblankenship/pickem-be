@@ -1,13 +1,13 @@
 import { and, DrizzleError, eq, SQL } from 'drizzle-orm';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { inject, injectable } from 'inversify';
 import { GameNotFoundError, GameRepositoryError } from '../db.errors';
 import { gamesTable } from '../db.schema';
 import { DatabaseService } from '../db.service';
+import { Database } from '../db.types';
 
 @injectable()
 export class GameRepository {
-  private readonly db: PostgresJsDatabase;
+  private readonly db: Database;
 
   constructor(
     @inject(DatabaseService) private readonly databaseService: DatabaseService,

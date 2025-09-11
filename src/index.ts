@@ -1,8 +1,10 @@
 import { container } from './container';
-import { GameDataSyncService } from './game-data-sync/game-data-sync.service';
+import { TaskService } from './task/task.service';
 
 (async () => {
-  const service = container.get(GameDataSyncService);
+  const service = container.get(TaskService);
 
-  await service.updateGameData({ year: 2025, week: 1 });
+  await service.completeWeek({ year: 2024, week: 1 });
+
+  console.log('Done');
 })();
