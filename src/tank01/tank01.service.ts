@@ -147,9 +147,9 @@ export class Tank01Service {
       });
 
       const data = tank01Response(
-        z.interface({
+        z.object({
           sportsBooks: z
-            .interface({
+            .object({
               sportsBook: z.string(),
               odds: tank01GameOddsSchema.partial(),
             })

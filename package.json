@@ -2,16 +2,17 @@
   "type": "module",
   "scripts": {
     "build": "rollup --config",
+    "cli": "tsx --require dotenv/config --env-file .env.development ./src/index.ts",
+    "cli:prod": "tsx --require dotenv/config --env-file .env.production ./src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "dev": "tsx --require dotenv/config --env-file .env.development ./src/index.ts dotenv_config_path=./.env",
     "preinstall": "npx only-allow pnpm",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "husky",
-    "prod": "tsx --require dotenv/config --env-file .env.production ./src/index.ts dotenv_config_path=./.env"
+    "prepare": "husky"
   },
   "dependencies": {
+    "@clack/prompts": "^0.11.0",
     "@date-fns/utc": "2.1.1",
     "axios": "1.8.4",
     "date-fns": "4.1.0",
@@ -19,7 +20,7 @@
     "inversify": "7.7.0",
     "postgres": "3.4.7",
     "reflect-metadata": "0.2.2",
-    "zod": "4.0.0-beta.20250411T195319"
+    "zod": "4.1.8"
   },
   "devDependencies": {
     "@eslint/js": "9.24.0",
