@@ -12,7 +12,7 @@
     "prod": "tsx --require dotenv/config --env-file .env.production ./src/index.ts dotenv_config_path=./.env"
   },
   "dependencies": {
-    "@date-fns/utc": "2.1.0",
+    "@date-fns/utc": "2.1.1",
     "axios": "1.8.4",
     "date-fns": "4.1.0",
     "drizzle-orm": "0.41.0",
