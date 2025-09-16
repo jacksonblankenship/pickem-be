@@ -113,12 +113,16 @@ program
   });
 
 (async () => {
+  let dbService: DatabaseService | null = null;
+
   try {
     if (process.argv.length === 2) {
       program.help();
       return;
     }
 
+    // Initialize database service only when needed
+    dbService = container.get(DatabaseService);
     await program.parseAsync();
   } catch (error) {
     const logger = container.get(LoggerService);
@@ -128,13 +132,16 @@ program
     console.error('❌ Error:', error instanceof Error ? error.message : error);
     process.exit(1);
   } finally {
-    // Only close database connection if it was actually used
-    try {
-      const dbService = container.get(DatabaseService);
-      dbService.getClient().end();
-    } catch {
-      // Database service might not have been instantiated if only help was shown
+    // Only close database connection if it was actually initialized
+    if (dbService !== null) {
+      try {
+        await dbService.getClient().end();
+      } catch (error) {
+        console.error(
+          '❌ Error closing database connection:',
+          error instanceof Error ? error.message : error,
+        );
+      }
     }
-    process.exit(0);
   }
 })();
