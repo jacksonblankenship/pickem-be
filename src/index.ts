@@ -41,7 +41,6 @@ function validateWeek(value: unknown): number {
   return result.data;
 }
 
-// Add commands for each action
 program
   .command('prepare-week')
   .description(
@@ -110,7 +109,6 @@ program
 
 (async () => {
   try {
-    // If no arguments provided, show help
     if (process.argv.length === 2) {
       program.help();
       return;
