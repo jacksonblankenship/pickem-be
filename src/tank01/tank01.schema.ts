@@ -1,7 +1,7 @@
 import z from 'zod';
 
 export function tank01Response<T extends z.ZodType>(schema: T) {
-  return z.interface({
+  return z.object({
     statusCode: z.int(),
     body: schema,
   });
@@ -56,7 +56,7 @@ const gameTimeEpochSchema = z.preprocess(val => {
   return Number.isFinite(num) ? num : null;
 }, z.number().nullable());
 
-export const tank01GameSchema = z.interface({
+export const tank01GameSchema = z.object({
   gameID: z.string(),
   home: tank01TeamEnum,
   away: tank01TeamEnum,
@@ -65,7 +65,7 @@ export const tank01GameSchema = z.interface({
 
 export type Tank01Game = z.infer<typeof tank01GameSchema>;
 
-export const tank01GameStatusSchema = z.interface({
+export const tank01GameStatusSchema = z.object({
   awayPts: z.coerce.number(),
   homePts: z.coerce.number(),
   gameStatusCode: z.enum(Tank01GameStatusCode),
@@ -92,7 +92,7 @@ const spreadSchema = z
     return val;
   });
 
-export const tank01GameOddsSchema = z.interface({
+export const tank01GameOddsSchema = z.object({
   totalUnder: z.coerce.number(),
   totalUnderOdds: oddsSchema,
 
@@ -108,7 +108,7 @@ export const tank01GameOddsSchema = z.interface({
 
 export type Tank01GameOdds = z.infer<typeof tank01GameOddsSchema>;
 
-export const tank01TeamSchema = z.interface({
+export const tank01TeamSchema = z.object({
   teamAbv: tank01TeamEnum,
   teamName: z.string(),
   division: z.string(),

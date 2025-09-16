@@ -10,7 +10,9 @@ export class ConfigService {
     this.config = configSchema.parse(process.env);
   }
 
-  public getConfigValue(key: keyof z.infer<typeof configSchema>) {
+  public getConfigValue<K extends keyof z.infer<typeof configSchema>>(
+    key: K,
+  ): z.infer<typeof configSchema>[K] {
     return this.config[key];
   }
 }

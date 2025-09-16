@@ -2,6 +2,7 @@ import { gameStatusEnum } from '@/database/db.schema';
 import { BetOptionRepository } from '@/database/repositories/bet-option.repository';
 import { GameRepository } from '@/database/repositories/game.repository';
 import { TeamRepository } from '@/database/repositories/team.repository';
+import { LoggerService } from '@/logger/logger.service';
 import { Tank01GameStatusCode } from '@/tank01/tank01.schema';
 import { Tank01Service } from '@/tank01/tank01.service';
 import { epochToUtcDate } from '@/utils';
@@ -19,6 +20,8 @@ export class GameDataSyncService {
     private readonly gameRepository: GameRepository,
     @inject(BetOptionRepository)
     private readonly betOptionRepository: BetOptionRepository,
+    @inject(LoggerService)
+    private readonly logger: LoggerService,
   ) {}
 
   /**
@@ -27,11 +30,24 @@ export class GameDataSyncService {
    * @param params.year - The NFL season year to initialize
    */
   public async importSeasonGames(params: { year: number }) {
+    this.logger.info('Starting season games import', { year: params.year });
+
     try {
       for (let currentWeek = 1; currentWeek <= 18; currentWeek++) {
+        this.logger.info('Importing games for week', {
+          year: params.year,
+          week: currentWeek,
+        });
+
         const tank01Games = await this.tank01Service.getGames({
           year: params.year,
           week: currentWeek,
+        });
+
+        this.logger.info('Processing games for week', {
+          year: params.year,
+          week: currentWeek,
+          gameCount: tank01Games.length,
         });
 
         for (const tank01Game of tank01Games) {
@@ -51,8 +67,22 @@ export class GameDataSyncService {
             away_team_id: awayTeam.id,
           });
         }
+
+        this.logger.info('Completed games import for week', {
+          year: params.year,
+          week: currentWeek,
+          gameCount: tank01Games.length,
+        });
       }
+
+      this.logger.info('Successfully completed season games import', {
+        year: params.year,
+      });
     } catch (error) {
+      this.logger.error('Failed to import season games', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        year: params.year,
+      });
       throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
@@ -64,10 +94,21 @@ export class GameDataSyncService {
    * @param params.week - The week number (1-18)
    */
   public async syncGameData(params: { year: number; week: number }) {
+    this.logger.info('Starting game data sync', {
+      year: params.year,
+      week: params.week,
+    });
+
     try {
       const dbGames = await this.gameRepository.getGames({
         year: params.year,
         week: params.week,
+      });
+
+      this.logger.info('Found games to sync', {
+        year: params.year,
+        week: params.week,
+        gameCount: dbGames.length,
       });
 
       for (const dbGame of dbGames) {
@@ -91,7 +132,18 @@ export class GameDataSyncService {
           ),
         });
       }
+
+      this.logger.info('Successfully completed game data sync', {
+        year: params.year,
+        week: params.week,
+        gameCount: dbGames.length,
+      });
     } catch (error) {
+      this.logger.error('Failed to sync game data', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        year: params.year,
+        week: params.week,
+      });
       throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
@@ -103,10 +155,21 @@ export class GameDataSyncService {
    * @param params.week - The week number (1-18)
    */
   public async importBettingOptions(params: { year: number; week: number }) {
+    this.logger.info('Starting betting options import', {
+      year: params.year,
+      week: params.week,
+    });
+
     try {
       const dbGames = await this.gameRepository.getGames({
         year: params.year,
         week: params.week,
+      });
+
+      this.logger.info('Found games for betting options import', {
+        year: params.year,
+        week: params.week,
+        gameCount: dbGames.length,
       });
 
       for (const dbGame of dbGames) {
@@ -148,7 +211,18 @@ export class GameDataSyncService {
           }),
         ]);
       }
+
+      this.logger.info('Successfully completed betting options import', {
+        year: params.year,
+        week: params.week,
+        gameCount: dbGames.length,
+      });
     } catch (error) {
+      this.logger.error('Failed to import betting options', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        year: params.year,
+        week: params.week,
+      });
       throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
@@ -157,8 +231,12 @@ export class GameDataSyncService {
    * Initializes all NFL teams by fetching team data from Tank01 and storing them in the database.
    */
   public async importTeams() {
+    this.logger.info('Starting teams import');
+
     try {
       const tank01Teams = await this.tank01Service.getTeams();
+
+      this.logger.info('Processing teams', { teamCount: tank01Teams.length });
 
       for (const tank01Team of tank01Teams) {
         await this.teamRepository.upsertTeam({
@@ -169,7 +247,14 @@ export class GameDataSyncService {
           division: tank01Team.division,
         });
       }
+
+      this.logger.info('Successfully completed teams import', {
+        teamCount: tank01Teams.length,
+      });
     } catch (error) {
+      this.logger.error('Failed to import teams', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }

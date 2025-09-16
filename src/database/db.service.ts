@@ -1,4 +1,5 @@
 import { ConfigService } from '@/config/config.service';
+import { LoggerService } from '@/logger/logger.service';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { inject, injectable } from 'inversify';
 import postgres from 'postgres';
@@ -12,13 +13,18 @@ export class DatabaseService {
 
   constructor(
     @inject(ConfigService) private readonly configService: ConfigService,
+    @inject(LoggerService) private readonly logger: LoggerService,
   ) {
+    this.logger.info('Initializing database connection');
+
     const client = postgres(this.configService.getConfigValue('DATABASE_URL'), {
       prepare: false,
     });
 
     this.client = client;
     this.db = drizzle({ client: this.client, schema: schema });
+
+    this.logger.info('Database connection initialized successfully');
   }
 
   public getDb() {
