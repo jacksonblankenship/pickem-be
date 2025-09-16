@@ -1,9 +1,11 @@
 import { Command } from 'commander';
 import z from 'zod';
 import { container } from './container';
+import { DatabaseService } from './database/db.service';
 import { TaskService } from './task/task.service';
 
 const taskService = container.get(TaskService);
+const dbService = container.get(DatabaseService);
 const program = new Command();
 
 program
@@ -11,19 +13,32 @@ program
   .description('🏈 Pickem Backend Task Management CLI')
   .version('1.0.0');
 
-function validateYear(value: unknown) {
-  const result = z.transform(Number).pipe(z.int()).safeParse(value);
+function validateYear(value: unknown): number {
+  const result = z
+    .transform(Number)
+    .pipe(z.int().min(2000).max(2030))
+    .safeParse(value);
 
-  return result.success === true ? result.data : undefined;
+  if (result.success === false)
+    throw new Error(
+      `Invalid year: ${value}. Must be an integer between 2000 and 2030.`,
+    );
+
+  return result.data;
 }
 
-function validateWeek(value: unknown) {
+function validateWeek(value: unknown): number {
   const result = z
     .transform(Number)
     .pipe(z.int().min(1).max(18))
     .safeParse(value);
 
-  return result.success === true ? result.data : undefined;
+  if (result.success === false)
+    throw new Error(
+      `Invalid week: ${value}. Must be an integer between 1 and 18.`,
+    );
+
+  return result.data;
 }
 
 // Add commands for each action
@@ -94,15 +109,19 @@ program
   });
 
 (async () => {
-  // If no arguments provided, show help
-  if (process.argv.length === 2) {
-    program.help();
-    return;
-  }
+  try {
+    // If no arguments provided, show help
+    if (process.argv.length === 2) {
+      program.help();
+      return;
+    }
 
-  await program.parseAsync();
-  process.exit(0);
-})().catch(error => {
-  console.error('❌ Error:', error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+    await program.parseAsync();
+  } catch (error) {
+    console.error('❌ Error:', error instanceof Error ? error.message : error);
+    process.exit(1);
+  } finally {
+    dbService.getClient().end();
+    process.exit(0);
+  }
+})();
