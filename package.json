@@ -12,7 +12,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@clack/prompts": "^0.11.0",
     "@date-fns/utc": "2.1.1",
     "axios": "1.8.4",
     "commander": "^14.0.1",
