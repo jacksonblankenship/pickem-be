@@ -1,0 +1,61 @@
+name: Daily Update
+
+on:
+  schedule:
+    - cron: '0 10 * * 5,6,7,1,2' # Run every Friday, Saturday, Sunday, Monday, Tuesday at 10 UTC (5am ET, 4am CT)
+
+jobs:
+  daily-update:
+    runs-on: ubuntu-24.04
+    env:
+      RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+      RAPID_API_HOST: ${{ secrets.RAPID_API_HOST }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v5
+        with:
+          cache: 'pnpm'
+          node-version-file: '.tool-versions'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Calculate NFL week number
+        id: calc
+        run: |
+          start_date="2025-09-04"
+          now=$(date +%s)
+          start=$(perl -MTime::Piece -e "print Time::Piece->strptime('$start_date', '%Y-%m-%d')->epoch")
+          diff_days=$(( (now - start) / 86400 ))
+
+          if [ $diff_days -lt 0 ]; then
+            echo "week_number=0" >> $GITHUB_ENV
+            echo "[INFO] Season hasn't started yet (diff_days=$diff_days)"
+            exit 0
+          fi
+
+          week_number=$(( diff_days / 7 + 1 ))
+          echo "week_number=$week_number" >> $GITHUB_ENV
+          echo "[INFO] Calculated week_number=$week_number"
+
+      - name: Daily Update
+        run: |
+          if [ "$week_number" -eq 0 ]; then
+            echo "[SKIP] Daily Update — season not started yet"
+            exit 0
+          fi
+          if [ "$week_number" -gt 18 ]; then
+            echo "[SKIP] Daily Update — season complete (week=$week_number)"
+            exit 0
+          fi
+
+          echo "[RUN] Daily Update — week $week_number, year 2025"
+          pnpm cli:prod daily-update --week $week_number --year 2025

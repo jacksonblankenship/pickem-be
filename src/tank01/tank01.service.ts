@@ -1,4 +1,5 @@
 import { ConfigService } from '@/config/config.service';
+import { LoggerService } from '@/logger/logger.service';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { inject, injectable } from 'inversify';
 import z, { ZodError } from 'zod';
@@ -27,6 +28,7 @@ export class Tank01Service {
 
   constructor(
     @inject(ConfigService) private readonly configService: ConfigService,
+    @inject(LoggerService) private readonly logger: LoggerService,
   ) {
     this.client = axios.create({
       baseURL:
@@ -42,6 +44,11 @@ export class Tank01Service {
     week: number;
     year: number;
   }): Promise<Tank01Game[]> {
+    this.logger.info('Fetching games from Tank01 API', {
+      week: params.week,
+      year: params.year,
+    });
+
     const response = await this.client.get<unknown>('getNFLGamesForWeek', {
       params: {
         week: params.week,
@@ -55,8 +62,20 @@ export class Tank01Service {
         response.data,
       );
 
+      this.logger.info('Successfully fetched games', {
+        count: body.length,
+        week: params.week,
+        year: params.year,
+      });
+
       return body;
     } catch (error: unknown) {
+      this.logger.error('Failed to fetch games from Tank01 API', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        week: params.week,
+        year: params.year,
+      });
+
       if (error instanceof AxiosError) {
         throw new Tank01ApiError(error.message, {
           cause: error,
@@ -92,6 +111,10 @@ export class Tank01Service {
   public async getGameStatus(params: {
     tank01GameId: string;
   }): Promise<Tank01GameStatus> {
+    this.logger.info('Fetching game status from Tank01 API', {
+      tank01GameId: params.tank01GameId,
+    });
+
     try {
       const response = await this.client.get<unknown>('getNFLScoresOnly', {
         params: {
@@ -104,8 +127,18 @@ export class Tank01Service {
         z.record(z.literal(params.tank01GameId), tank01GameStatusSchema),
       ).parse(response.data);
 
+      this.logger.info('Successfully fetched game status', {
+        tank01GameId: params.tank01GameId,
+        status: body[params.tank01GameId]?.gameStatusCode,
+      });
+
       return body[params.tank01GameId];
     } catch (error) {
+      this.logger.error('Failed to fetch game status from Tank01 API', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        tank01GameId: params.tank01GameId,
+      });
+
       if (error instanceof AxiosError) {
         throw new Tank01ApiError(error.message, {
           cause: error,
@@ -130,6 +163,10 @@ export class Tank01Service {
   public async getGameOdds(params: {
     tank01GameId: string;
   }): Promise<Tank01GameOdds> {
+    this.logger.info('Fetching game odds from Tank01 API', {
+      tank01GameId: params.tank01GameId,
+    });
+
     const preferredSportsBooks = [
       'bet365',
       'fanduel',
@@ -157,6 +194,11 @@ export class Tank01Service {
         }),
       ).parse(response.data);
 
+      this.logger.info('Found sportsbooks with odds', {
+        tank01GameId: params.tank01GameId,
+        sportsbookCount: data.body.sportsBooks.length,
+      });
+
       for (const preferredSportsBook of preferredSportsBooks) {
         const odds = data.body.sportsBooks.find(
           ({ sportsBook }) => sportsBook === preferredSportsBook,
@@ -164,17 +206,39 @@ export class Tank01Service {
 
         if (odds === undefined) continue;
 
-        if (this.isCompleteOdds(odds)) return odds;
+        if (this.isCompleteOdds(odds)) {
+          this.logger.info('Using odds from preferred sportsbook', {
+            tank01GameId: params.tank01GameId,
+            sportsbook: preferredSportsBook,
+          });
+          return odds;
+        }
       }
 
       for (const sportsBook of data.body.sportsBooks) {
-        if (this.isCompleteOdds(sportsBook.odds)) return sportsBook.odds;
+        if (this.isCompleteOdds(sportsBook.odds)) {
+          this.logger.info('Using odds from fallback sportsbook', {
+            tank01GameId: params.tank01GameId,
+            sportsbook: sportsBook.sportsBook,
+          });
+          return sportsBook.odds;
+        }
       }
+
+      this.logger.error('No complete odds found for game', {
+        tank01GameId: params.tank01GameId,
+        availableSportsbooks: data.body.sportsBooks.map(sb => sb.sportsBook),
+      });
 
       throw new MissingOddsError(
         `No sportsbook provided complete odds for tank01 game ${params.tank01GameId}`,
       );
     } catch (error: unknown) {
+      this.logger.error('Failed to fetch game odds from Tank01 API', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        tank01GameId: params.tank01GameId,
+      });
+
       if (error instanceof AxiosError) {
         throw new Tank01ApiError(error.message, {
           cause: error,
@@ -197,6 +261,8 @@ export class Tank01Service {
   }
 
   public async getTeams(): Promise<Tank01Team[]> {
+    this.logger.info('Fetching teams from Tank01 API');
+
     try {
       const response = await this.client.get<unknown>('getNFLTeams');
 
@@ -204,8 +270,14 @@ export class Tank01Service {
         response.data,
       );
 
+      this.logger.info('Successfully fetched teams', { count: body.length });
+
       return body;
     } catch (error: unknown) {
+      this.logger.error('Failed to fetch teams from Tank01 API', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
       if (error instanceof AxiosError) {
         throw new Tank01ApiError(error.message, {
           cause: error,

@@ -1,4 +1,5 @@
 import { PickRepository } from '@/database/repositories/pick.repository';
+import { LoggerService } from '@/logger/logger.service';
 import { inject, injectable } from 'inversify';
 import {
   GameNotCompletedError,
@@ -12,13 +13,26 @@ export class GradingService {
   constructor(
     @inject(PickRepository)
     private readonly pickRepository: PickRepository,
+    @inject(LoggerService)
+    private readonly logger: LoggerService,
   ) {}
 
   public async gradeWeekPicks(params: { year: number; week: number }) {
+    this.logger.info('Starting week picks grading', {
+      year: params.year,
+      week: params.week,
+    });
+
     try {
       const records = await this.pickRepository.getAllPicksWithGameScores({
         year: params.year,
         week: params.week,
+      });
+
+      this.logger.info('Found picks to grade', {
+        year: params.year,
+        week: params.week,
+        pickCount: records.length,
       });
 
       for (const record of records) {
@@ -59,7 +73,18 @@ export class GradingService {
           status: pickStatus,
         });
       }
+
+      this.logger.info('Completed week picks grading', {
+        year: params.year,
+        week: params.week,
+        totalCount: records.length,
+      });
     } catch (error) {
+      this.logger.error('Failed to grade week picks', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        year: params.year,
+        week: params.week,
+      });
       throw new GradingError('Unknown error occurred', { cause: error });
     }
   }

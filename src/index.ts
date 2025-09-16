@@ -2,10 +2,9 @@ import { Command } from 'commander';
 import z from 'zod';
 import { container } from './container';
 import { DatabaseService } from './database/db.service';
+import { LoggerService } from './logger/logger.service';
 import { TaskService } from './task/task.service';
 
-const taskService = container.get(TaskService);
-const dbService = container.get(DatabaseService);
 const program = new Command();
 
 program
@@ -57,6 +56,8 @@ program
     validateWeek,
   )
   .action(async options => {
+    const taskService = container.get(TaskService);
+
     await taskService.prepareWeek({
       year: options.year,
       week: options.week,
@@ -79,6 +80,8 @@ program
     validateWeek,
   )
   .action(async options => {
+    const taskService = container.get(TaskService);
+
     await taskService.dailyUpdate({
       year: options.year,
       week: options.week,
@@ -101,6 +104,8 @@ program
     validateWeek,
   )
   .action(async options => {
+    const taskService = container.get(TaskService);
+
     await taskService.completeWeek({
       year: options.year,
       week: options.week,
@@ -116,10 +121,20 @@ program
 
     await program.parseAsync();
   } catch (error) {
+    const logger = container.get(LoggerService);
+    logger.error('CLI execution failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     console.error('❌ Error:', error instanceof Error ? error.message : error);
     process.exit(1);
   } finally {
-    dbService.getClient().end();
+    // Only close database connection if it was actually used
+    try {
+      const dbService = container.get(DatabaseService);
+      dbService.getClient().end();
+    } catch {
+      // Database service might not have been instantiated if only help was shown
+    }
     process.exit(0);
   }
 })();

@@ -1,11 +1,11 @@
-name: Scheduled Tasks
+name: Finalize Week
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Run daily at midnight UTC
+    - cron: '0 10 * * 2' # Run every Tuesday at 10 UTC (5am ET, 4am CT)
 
 jobs:
-  weekly-routines:
+  finalize-week:
     runs-on: ubuntu-24.04
     env:
       RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
@@ -46,60 +46,16 @@ jobs:
           echo "week_number=$week_number" >> $GITHUB_ENV
           echo "[INFO] Calculated week_number=$week_number"
 
-      - name: Daily Update
-        run: |
-          day=$(date +%u)
-          if [ "$day" -eq 3 ] || [ "$day" -eq 4 ]; then
-            echo "[SKIP] Daily Update — not run on Wed/Thu (day=$day)"
-            exit 0
-          fi
-          if [ "$week_number" -eq 0 ]; then
-            echo "[SKIP] Daily Update — season not started yet"
-            exit 0
-          fi
-          if [ "$week_number" -ge 19 ]; then
-            echo "[SKIP] Daily Update — season complete (week=$week_number)"
-            exit 0
-          fi
-
-          echo "[RUN] Daily Update — week $week_number, year 2025"
-          pnpm cli:prod daily-update --week $week_number --year 2025
-
       - name: Finalize Week
         run: |
-          day=$(date +%u)
-          if [ "$day" -ne 2 ]; then
-            echo "[SKIP] Finalize Week — today is not Tuesday (day=$day)"
-            exit 0
-          fi
           if [ "$week_number" -eq 0 ]; then
             echo "[SKIP] Finalize Week — season not started yet"
             exit 0
           fi
-          if [ "$week_number" -ge 19 ]; then
+          if [ "$week_number" -gt 18 ]; then
             echo "[SKIP] Finalize Week — season complete (week=$week_number)"
             exit 0
           fi
 
           echo "[RUN] Finalize Week — week $week_number, year 2025"
           pnpm cli:prod complete-week --week $week_number --year 2025
-
-      - name: Prepare Next Week
-        run: |
-          day=$(date +%u)
-          if [ "$day" -ne 2 ]; then
-            echo "[SKIP] Prepare Next Week — today is not Tuesday (day=$day)"
-            exit 0
-          fi
-          if [ "$week_number" -eq 0 ]; then
-            echo "[SKIP] Prepare Next Week — season not started yet"
-            exit 0
-          fi
-          if [ "$week_number" -ge 18 ]; then
-            echo "[SKIP] Prepare Next Week — no week after $week_number"
-            exit 0
-          fi
-
-          next_week=$(( week_number + 1 ))
-          echo "[RUN] Prepare Next Week — week $next_week, year 2025"
-          pnpm cli:prod prepare-week --week $next_week --year 2025

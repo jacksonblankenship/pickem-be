@@ -1,7 +1,7 @@
 import { GameDataSyncService } from '@/game-data-sync/game-data-sync.service';
 import { GradingService } from '@/grading/grading.service';
+import { LoggerService } from '@/logger/logger.service';
 import { inject, injectable } from 'inversify';
-import { TaskError } from './task.errors';
 
 @injectable()
 export class TaskService {
@@ -10,48 +10,51 @@ export class TaskService {
     private readonly gameDataSyncService: GameDataSyncService,
     @inject(GradingService)
     private readonly gradingService: GradingService,
+    @inject(LoggerService)
+    private readonly logger: LoggerService,
   ) {}
 
   public async prepareWeek(params: { year: number; week: number }) {
-    try {
-      await this.gameDataSyncService.syncGameData({
-        year: params.year,
-        week: params.week,
-      });
+    this.logger.info('Starting week preparation', {
+      year: params.year,
+      week: params.week,
+    });
 
-      await this.gameDataSyncService.importBettingOptions({
-        year: params.year,
-        week: params.week,
-      });
-    } catch (error) {
-      throw new TaskError('Unknown error occurred', { cause: error });
-    }
+    await this.gameDataSyncService.syncGameData(params);
+    await this.gameDataSyncService.importBettingOptions(params);
+
+    this.logger.info('Week preparation completed', {
+      year: params.year,
+      week: params.week,
+    });
   }
 
   public async dailyUpdate(params: { year: number; week: number }) {
-    try {
-      await this.gameDataSyncService.syncGameData({
-        year: params.year,
-        week: params.week,
-      });
-    } catch (error) {
-      throw new TaskError('Unknown error occurred', { cause: error });
-    }
+    this.logger.info('Starting daily update', {
+      year: params.year,
+      week: params.week,
+    });
+
+    await this.gameDataSyncService.syncGameData(params);
+
+    this.logger.info('Daily update completed', {
+      year: params.year,
+      week: params.week,
+    });
   }
 
   public async completeWeek(params: { year: number; week: number }) {
-    try {
-      await this.gameDataSyncService.syncGameData({
-        year: params.year,
-        week: params.week,
-      });
+    this.logger.info('Starting week completion', {
+      year: params.year,
+      week: params.week,
+    });
 
-      await this.gradingService.gradeWeekPicks({
-        year: params.year,
-        week: params.week,
-      });
-    } catch (error) {
-      throw new TaskError('Unknown error occurred', { cause: error });
-    }
+    await this.gameDataSyncService.syncGameData(params);
+    await this.gradingService.gradeWeekPicks(params);
+
+    this.logger.info('Week completion finished', {
+      year: params.year,
+      week: params.week,
+    });
   }
 }
