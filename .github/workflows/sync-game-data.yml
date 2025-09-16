@@ -1,11 +1,11 @@
-name: Daily Update
+name: Game Data Sync
 
 on:
   schedule:
-    - cron: '0 10 * * 5,6,7,1,2' # Run every Friday, Saturday, Sunday, Monday, Tuesday at 10 UTC (5am ET, 4am CT)
+    - cron: '0 10 * * 5,6,7,1' # Run every Friday, Saturday, Sunday, Monday at 10 UTC (5am ET, 4am CT)
 
 jobs:
-  daily-update:
+  sync-game-data:
     runs-on: ubuntu-24.04
     env:
       RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
@@ -46,16 +46,16 @@ jobs:
           echo "week_number=$week_number" >> $GITHUB_ENV
           echo "[INFO] Calculated week_number=$week_number"
 
-      - name: Daily Update
+      - name: Sync Game Data
         run: |
           if [ "$week_number" -eq 0 ]; then
-            echo "[SKIP] Daily Update — season not started yet"
+            echo "[SKIP] Game Data Sync — season not started yet"
             exit 0
           fi
           if [ "$week_number" -gt 18 ]; then
-            echo "[SKIP] Daily Update — season complete (week=$week_number)"
+            echo "[SKIP] Game Data Sync — season complete (week=$week_number)"
             exit 0
           fi
 
-          echo "[RUN] Daily Update — week $week_number, year 2025"
-          pnpm cli:prod daily-update --week $week_number --year 2025
+          echo "[RUN] Game Data Sync — week $week_number, year 2025"
+          pnpm cli:prod sync-game-data --week $week_number --year 2025

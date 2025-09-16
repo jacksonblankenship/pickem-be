@@ -2,15 +2,13 @@ import { Command } from 'commander';
 import z from 'zod';
 import { container } from './container';
 import { DatabaseService } from './database/db.service';
+import { GameDataSyncService } from './game-data-sync/game-data-sync.service';
 import { LoggerService } from './logger/logger.service';
 import { TaskService } from './task/task.service';
 
 const program = new Command();
 
-program
-  .name('pickem-cli')
-  .description('🏈 Pickem Backend Task Management CLI')
-  .version('1.0.0');
+program.name('pickem-cli').description('🏈 Pickem Backend Task Management CLI');
 
 function validateYear(value: unknown): number {
   const result = z
@@ -65,9 +63,9 @@ program
   });
 
 program
-  .command('daily-update')
+  .command('sync-game-data')
   .description(
-    'Update game data with the latest information from external APIs. This command should be run daily during the season to ensure all game details, scores, and statuses are current. Useful for tracking live game updates and final scores.',
+    'Sync game data with the latest information from external APIs. This command should be run during active game periods to ensure all game details, scores, and statuses are current. Useful for tracking live game updates and final scores.',
   )
   .requiredOption(
     '-y, --year <year>',
@@ -80,9 +78,9 @@ program
     validateWeek,
   )
   .action(async options => {
-    const taskService = container.get(TaskService);
+    const gameDataSyncService = container.get(GameDataSyncService);
 
-    await taskService.dailyUpdate({
+    await gameDataSyncService.syncGameData({
       year: options.year,
       week: options.week,
     });

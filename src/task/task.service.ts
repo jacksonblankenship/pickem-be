@@ -29,20 +29,6 @@ export class TaskService {
     });
   }
 
-  public async dailyUpdate(params: { year: number; week: number }) {
-    this.logger.info('Starting daily update', {
-      year: params.year,
-      week: params.week,
-    });
-
-    await this.gameDataSyncService.syncGameData(params);
-
-    this.logger.info('Daily update completed', {
-      year: params.year,
-      week: params.week,
-    });
-  }
-
   public async completeWeek(params: { year: number; week: number }) {
     this.logger.info('Starting week completion', {
       year: params.year,
