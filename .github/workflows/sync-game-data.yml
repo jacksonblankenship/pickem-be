@@ -2,7 +2,7 @@ name: Game Data Sync
 
 on:
   schedule:
-    - cron: '0 10 * * 5,6,7,1' # Run every Friday, Saturday, Sunday, Monday at 10 UTC (5am ET, 4am CT)
+    - cron: '0 10 * * 0,1,4,5' # Run every Sunday, Monday, Thursday, Friday at 10 UTC (5am ET, 4am CT)
 
 jobs:
   sync-game-data:
