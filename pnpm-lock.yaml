@@ -15,7 +15,7 @@ importers:
         specifier: 1.8.4
         version: 1.8.4
       commander:
-        specifier: ^14.0.1
+        specifier: 14.0.1
         version: 14.0.1
       date-fns:
         specifier: 4.1.0
@@ -27,10 +27,10 @@ importers:
         specifier: 7.7.0
         version: 7.7.0(reflect-metadata@0.2.2)
       pino:
-        specifier: ^9.9.5
+        specifier: 9.9.5
         version: 9.9.5
       pino-pretty:
-        specifier: ^13.1.1
+        specifier: 13.1.1
         version: 13.1.1
       postgres:
         specifier: 3.4.7
