@@ -1,10 +1,9 @@
 import dotenv from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
-// Determine if we're in CI
 const isCI = !!process.env.CI;
 
-if (!isCI) {
+if (isCI === false) {
   dotenv.config({ path: '.env.development' });
 }
 
