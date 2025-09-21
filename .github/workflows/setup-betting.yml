@@ -1,6 +1,7 @@
 name: Setup Betting
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 17 * * 2' # Run every Tuesday at 17 UTC (12pm ET, 11am CT)
 
