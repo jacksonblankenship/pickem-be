@@ -1,6 +1,7 @@
 name: Grade Picks
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 10 * * 2' # Run every Tuesday at 10 UTC (5am ET, 4am CT)
 
