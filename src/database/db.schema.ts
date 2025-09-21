@@ -1,5 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import {
+  boolean,
   integer,
   numeric,
   pgEnum,
@@ -20,13 +21,6 @@ export const betTargetEnum = pgEnum('bet_target', [
   'away',
   'over',
   'under',
-]);
-
-export const systemStatusEnum = pgEnum('system_status', [
-  'scheduled',
-  'open',
-  'closed',
-  'settled',
 ]);
 
 export const gameStatusEnum = pgEnum('game_status', [
@@ -81,8 +75,8 @@ export const gamesTable = pgTable(
       .notNull(),
     home_team_score: integer().notNull().default(0),
     away_team_score: integer().notNull().default(0),
+    neutral_site: boolean().notNull().default(false),
     game_status: gameStatusEnum().notNull().default('not-started'),
-    system_status: systemStatusEnum().notNull().default('scheduled'),
   },
   t => [
     unique().on(t.year, t.week, t.home_team_id, t.away_team_id),

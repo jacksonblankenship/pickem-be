@@ -15,16 +15,12 @@ export class DatabaseService {
     @inject(ConfigService) private readonly configService: ConfigService,
     @inject(LoggerService) private readonly logger: LoggerService,
   ) {
-    this.logger.info('Initializing database connection');
-
     const client = postgres(this.configService.getConfigValue('DATABASE_URL'), {
       prepare: false,
     });
 
     this.client = client;
     this.db = drizzle({ client: this.client, schema: schema });
-
-    this.logger.info('Database connection initialized successfully');
   }
 
   public getDb() {

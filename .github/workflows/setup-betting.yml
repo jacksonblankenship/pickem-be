@@ -1,11 +1,11 @@
-name: Prepare Week
+name: Setup Betting
 
 on:
   schedule:
     - cron: '0 17 * * 2' # Run every Tuesday at 17 UTC (12pm ET, 11am CT)
 
 jobs:
-  prepare-week:
+  setup-betting:
     runs-on: ubuntu-24.04
     env:
       RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
@@ -46,17 +46,17 @@ jobs:
           echo "week_number=$week_number" >> $GITHUB_ENV
           echo "[INFO] Calculated week_number=$week_number"
 
-      - name: Prepare Next Week
+      - name: Setup Betting
         run: |
           if [ "$week_number" -eq 0 ]; then
-            echo "[SKIP] Prepare Next Week — season not started yet"
+            echo "[SKIP] Setup Betting — season not started yet"
             exit 0
           fi
           if [ "$week_number" -ge 18 ]; then
-            echo "[SKIP] Prepare Next Week — no week after $week_number"
+            echo "[SKIP] Setup Betting — no week after $week_number"
             exit 0
           fi
 
           next_week=$(( week_number + 1 ))
-          echo "[RUN] Prepare Next Week — week $next_week, year 2025"
-          pnpm cli:prod prepare-week --week $next_week --year 2025
+          echo "[RUN] Setup Betting — week $next_week, year 2025"
+          pnpm cli:prod setup-betting --week $next_week --year 2025

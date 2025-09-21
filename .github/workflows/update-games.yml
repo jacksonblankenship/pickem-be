@@ -1,11 +1,11 @@
-name: Finalize Week
+name: Update Games
 
 on:
   schedule:
-    - cron: '0 10 * * 2' # Run every Tuesday at 10 UTC (5am ET, 4am CT)
+    - cron: '0 10 * * 0,1,4,5' # Run every Sunday, Monday, Thursday, Friday at 10 UTC (5am ET, 4am CT)
 
 jobs:
-  finalize-week:
+  update-games:
     runs-on: ubuntu-24.04
     env:
       RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
@@ -46,16 +46,16 @@ jobs:
           echo "week_number=$week_number" >> $GITHUB_ENV
           echo "[INFO] Calculated week_number=$week_number"
 
-      - name: Finalize Week
+      - name: Update Games
         run: |
           if [ "$week_number" -eq 0 ]; then
-            echo "[SKIP] Finalize Week — season not started yet"
+            echo "[SKIP] Update Games — season not started yet"
             exit 0
           fi
           if [ "$week_number" -gt 18 ]; then
-            echo "[SKIP] Finalize Week — season complete (week=$week_number)"
+            echo "[SKIP] Update Games — season complete (week=$week_number)"
             exit 0
           fi
 
-          echo "[RUN] Finalize Week — week $week_number, year 2025"
-          pnpm cli:prod complete-week --week $week_number --year 2025
+          echo "[RUN] Update Games — week $week_number, year 2025"
+          pnpm cli:prod update-games --week $week_number --year 2025
