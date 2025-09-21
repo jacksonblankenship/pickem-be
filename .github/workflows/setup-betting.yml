@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Run build
+        run: pnpm build
+
       - name: Calculate NFL week number
         id: calc
         run: |
@@ -59,4 +62,4 @@ jobs:
 
           next_week=$(( week_number + 1 ))
           echo "[RUN] Setup Betting — week $next_week, year 2025"
-          pnpm cli:prod setup-betting --week $next_week --year 2025
+          pnpm start -- setup-betting --week $next_week --year 2025
