@@ -25,16 +25,17 @@ export class GameDataSyncService {
   ) {}
 
   /**
-   * Initializes a complete NFL season by fetching and storing all games for weeks 1-18.
-   * @param params - Object containing the year to initialize
-   * @param params.year - The NFL season year to initialize
+   * Syncs a complete NFL season by fetching and upserting all games for weeks 1-18.
+   * This method is idempotent - running it multiple times will update existing games.
+   * @param params - Object containing the year to sync
+   * @param params.year - The NFL season year to sync
    */
-  public async importSeasonGames(params: { year: number }) {
-    this.logger.info('Starting season games import', { year: params.year });
+  public async syncSeasonGames(params: { year: number }) {
+    this.logger.info('Starting season games sync', { year: params.year });
 
     try {
       for (let currentWeek = 1; currentWeek <= 18; currentWeek++) {
-        this.logger.info('Importing games for week', {
+        this.logger.info('Syncing games for week', {
           year: params.year,
           week: currentWeek,
         });
@@ -60,29 +61,36 @@ export class GameDataSyncService {
           );
 
           await this.gameRepository.upsertGame({
+            date: tank01Game.gameTime_epoch
+              ? epochToUtcDate(tank01Game.gameTime_epoch)
+              : null,
             external_id: tank01Game.gameID,
             year: params.year,
             week: currentWeek,
             home_team_id: homeTeam.id,
             away_team_id: awayTeam.id,
+            neutral_site: tank01Game.neutralSite,
           });
         }
 
-        this.logger.info('Completed games import for week', {
+        this.logger.info('Completed games sync for week', {
           year: params.year,
           week: currentWeek,
           gameCount: tank01Games.length,
         });
       }
 
-      this.logger.info('Successfully completed season games import', {
+      this.logger.info('Successfully completed season games sync', {
         year: params.year,
       });
     } catch (error) {
-      this.logger.error('Failed to import season games', {
+      this.logger.error('Failed to sync season games', {
         error: error instanceof Error ? error.message : 'Unknown error',
         year: params.year,
       });
+
+      console.error(error);
+
       throw new GameDataSyncError('Unknown error occurred', { cause: error });
     }
   }
@@ -117,6 +125,7 @@ export class GameDataSyncService {
         });
 
         await this.gameRepository.upsertGame({
+          neutral_site: dbGame.neutral_site,
           away_team_id: dbGame.away_team_id,
           home_team_id: dbGame.home_team_id,
           external_id: dbGame.external_id,
@@ -149,13 +158,15 @@ export class GameDataSyncService {
   }
 
   /**
-   * Initializes betting odds for all games in a specific week, including spread and total bets.
-   * @param params - Object containing the year and week to initialize odds for
+   * Creates betting odds for all games in a specific week, including spread and total bets.
+   * This method is idempotent - running it multiple times will not create duplicates or modify existing odds.
+   * Once betting options are created, they remain locked to protect user bets.
+   * @param params - Object containing the year and week to create odds for
    * @param params.year - The NFL season year
    * @param params.week - The week number (1-18)
    */
-  public async importBettingOptions(params: { year: number; week: number }) {
-    this.logger.info('Starting betting options import', {
+  public async createBettingOptions(params: { year: number; week: number }) {
+    this.logger.info('Starting betting options creation', {
       year: params.year,
       week: params.week,
     });
@@ -166,7 +177,7 @@ export class GameDataSyncService {
         week: params.week,
       });
 
-      this.logger.info('Found games for betting options import', {
+      this.logger.info('Found games for betting options creation', {
         year: params.year,
         week: params.week,
         gameCount: dbGames.length,
@@ -212,13 +223,13 @@ export class GameDataSyncService {
         ]);
       }
 
-      this.logger.info('Successfully completed betting options import', {
+      this.logger.info('Successfully completed betting options creation', {
         year: params.year,
         week: params.week,
         gameCount: dbGames.length,
       });
     } catch (error) {
-      this.logger.error('Failed to import betting options', {
+      this.logger.error('Failed to create betting options', {
         error: error instanceof Error ? error.message : 'Unknown error',
         year: params.year,
         week: params.week,
@@ -228,10 +239,11 @@ export class GameDataSyncService {
   }
 
   /**
-   * Initializes all NFL teams by fetching team data from Tank01 and storing them in the database.
+   * Syncs all NFL teams by fetching team data from Tank01 and upserting them in the database.
+   * This method is idempotent - running it multiple times will update existing teams.
    */
-  public async importTeams() {
-    this.logger.info('Starting teams import');
+  public async syncTeams() {
+    this.logger.info('Starting teams sync');
 
     try {
       const tank01Teams = await this.tank01Service.getTeams();
@@ -248,11 +260,11 @@ export class GameDataSyncService {
         });
       }
 
-      this.logger.info('Successfully completed teams import', {
+      this.logger.info('Successfully completed teams sync', {
         teamCount: tank01Teams.length,
       });
     } catch (error) {
-      this.logger.error('Failed to import teams', {
+      this.logger.error('Failed to sync teams', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw new GameDataSyncError('Unknown error occurred', { cause: error });

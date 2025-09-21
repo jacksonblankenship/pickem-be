@@ -2,14 +2,14 @@
   "type": "module",
   "scripts": {
     "build": "rollup --config",
-    "cli": "tsx --require dotenv/config --env-file .env.development ./src/index.ts",
-    "cli:prod": "tsx --require dotenv/config --env-file .env.production ./src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "dev": "tsx --require dotenv/config --env-file .env.development ./src/index.ts",
     "preinstall": "npx only-allow pnpm",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@date-fns/utc": "2.1.1",

@@ -60,6 +60,7 @@ export const tank01GameSchema = z.object({
   gameID: z.string(),
   home: tank01TeamEnum,
   away: tank01TeamEnum,
+  neutralSite: z.transform(val => val === 'True').pipe(z.boolean()),
   gameTime_epoch: gameTimeEpochSchema,
 });
 

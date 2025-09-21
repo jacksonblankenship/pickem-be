@@ -36,6 +36,13 @@
       "when": 1757626162713,
       "tag": "0004_whole_snowbird",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1758120017250,
+      "tag": "0005_groovy_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

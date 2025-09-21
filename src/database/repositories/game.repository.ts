@@ -90,7 +90,13 @@ export class GameRepository {
             gamesTable.home_team_id,
             gamesTable.away_team_id,
           ],
-          set: params,
+          set: {
+            date: params.date,
+            game_status: params.game_status,
+            neutral_site: params.neutral_site,
+            away_team_score: params.away_team_score,
+            home_team_score: params.home_team_score,
+          },
         });
     } catch (error) {
       if (error instanceof DrizzleError) {

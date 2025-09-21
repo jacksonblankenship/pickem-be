@@ -1,4 +1,5 @@
 import { Container } from 'inversify';
+import { CliService } from './cli/cli.service';
 import { ConfigService } from './config/config.service';
 import { DatabaseService } from './database/db.service';
 import { BetOptionRepository } from './database/repositories/bet-option.repository';
@@ -9,25 +10,25 @@ import { GameDataSyncService } from './game-data-sync/game-data-sync.service';
 import { GradingService } from './grading/grading.service';
 import { LoggerService } from './logger/logger.service';
 import { Tank01Service } from './tank01/tank01.service';
-import { TaskService } from './task/task.service';
 
 const container: Container = new Container();
 
-container.bind(ConfigService).toSelf().inSingletonScope();
-container.bind(LoggerService).toSelf().inSingletonScope();
+const singletonServices = [
+  BetOptionRepository,
+  CliService,
+  ConfigService,
+  DatabaseService,
+  GameDataSyncService,
+  GameRepository,
+  GradingService,
+  LoggerService,
+  PickRepository,
+  Tank01Service,
+  TeamRepository,
+];
 
-container.bind(DatabaseService).toSelf().inSingletonScope();
-container.bind(BetOptionRepository).toSelf().inSingletonScope();
-container.bind(GameRepository).toSelf().inSingletonScope();
-container.bind(TeamRepository).toSelf().inSingletonScope();
-container.bind(PickRepository).toSelf().inSingletonScope();
-
-container.bind(GameDataSyncService).toSelf().inSingletonScope();
-
-container.bind(GradingService).toSelf().inSingletonScope();
-
-container.bind(TaskService).toSelf().inSingletonScope();
-
-container.bind(Tank01Service).toSelf().inSingletonScope();
+for (const service of singletonServices) {
+  container.bind(service).toSelf().inSingletonScope();
+}
 
 export { container };
