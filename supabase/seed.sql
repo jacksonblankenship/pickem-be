@@ -3718,6 +3718,10 @@ SET date = (
       END
     )
   );
+-- randomly set games as neutral site
+UPDATE public.games
+SET neutral_site = TRUE
+WHERE random() < 0.5;
 -- randomly assign picks for each user
 DO $$
 DECLARE u RECORD;
