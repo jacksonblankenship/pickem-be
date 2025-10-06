@@ -63,4 +63,4 @@ jobs:
 
           next_week=$(( week_number + 1 ))
           echo "[RUN] Setup Betting — week $next_week, year 2025"
-          pnpm start -- setup-betting --week $next_week --year 2025
+          pnpm start setup-betting --week=$next_week --year=2025
