@@ -62,4 +62,4 @@ jobs:
           fi
 
           echo "[RUN] Grade Picks — week $week_number, year 2025"
-          pnpm start -- grade-picks --week $week_number --year 2025
+          pnpm start grade-picks --week=$week_number --year=2025

@@ -62,4 +62,4 @@ jobs:
           fi
 
           echo "[RUN] Update Games — week $week_number, year 2025"
-          pnpm start -- update-games --week $week_number --year 2025
+          pnpm start update-games --week=$week_number --year=2025
