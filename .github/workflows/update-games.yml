@@ -1,6 +1,8 @@
 name: Update Games
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
   schedule:
     - cron: '0 10 * * 0,1,4,5' # Run every Sunday, Monday, Thursday, Friday at 10 UTC (5am ET, 4am CT)
