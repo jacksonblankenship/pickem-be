@@ -27,7 +27,7 @@
   "devDependencies": {
     "@eslint/js": "9.38.0",
     "@rollup/plugin-terser": "0.4.4",
-    "@rollup/plugin-typescript": "12.2.0",
+    "@rollup/plugin-typescript": "12.3.0",
     "@types/node": "22.18.11",
     "dotenv": "17.2.3",
     "drizzle-kit": "0.31.5",
