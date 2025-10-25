@@ -14,7 +14,7 @@
   "dependencies": {
     "@date-fns/utc": "2.1.1",
     "axios": "1.12.2",
-    "commander": "14.0.1",
+    "commander": "14.0.2",
     "date-fns": "4.1.0",
     "drizzle-orm": "0.44.7",
     "inversify": "7.10.3",
