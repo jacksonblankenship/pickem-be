@@ -24,8 +24,8 @@ importers:
         specifier: 0.45.0
         version: 0.45.0(gel@2.0.2)(postgres@3.4.7)
       inversify:
-        specifier: 7.10.5
-        version: 7.10.5(reflect-metadata@0.2.2)
+        specifier: 7.10.6
+        version: 7.10.6(reflect-metadata@0.2.2)
       pino:
         specifier: 10.1.0
         version: 10.1.0
@@ -615,8 +615,8 @@ packages:
   '@inversifyjs/common@1.5.2':
     resolution: {integrity: sha512-WlzR9xGadABS9gtgZQ+luoZ8V6qm4Ii6RQfcfC9Ho2SOlE6ZuemFo7PKJvKI0ikm8cmKbU8hw5UK6E4qovH21w==}
 
-  '@inversifyjs/container@1.14.2':
-    resolution: {integrity: sha512-t0pq2ECBEASy3Jw2ps+Q/usOW6wiPRjUeii3qjH4dtyZzF2y7DBlKoajo1wcIXice8EBjJmq+aLgDzu17Hjvkg==}
+  '@inversifyjs/container@1.14.3':
+    resolution: {integrity: sha512-dt9JwumXFpIQx2hbsCouDLdZ6sVMvkdUcwyM8hugRbXMCxSJ3nDd2pjdE4MGWyfWP/61zDiAXCiff+2jVrhcmw==}
     peerDependencies:
       reflect-metadata: ~0.2.2
 
@@ -1367,8 +1367,8 @@ packages:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
 
-  inversify@7.10.5:
-    resolution: {integrity: sha512-Ob/OlxEmzWP3Jz+VdMEb0D33Avi7M3aFBCHufhjRgvt3Q2YIobQPoKfwHQQOIyqAy+y1AVkX+eFhhhafY/QGIQ==}
+  inversify@7.10.6:
+    resolution: {integrity: sha512-pjJfyS9KS5Q4aIKx2Mc/mPnyxMParygddMY66irM+IIZUv3+Qp9pjEu+rMmUYPxGqaX2QgDIU/pH1t2eb3xodw==}
 
   is-core-module@2.16.1:
     resolution: {integrity: sha512-UfoeMA6fIJ8wTYFEUjelnaGI67v6+N7qXJEvQuIGa99l4xsCruSYOVSQ0uPANn4dAzm8lkYPaKLrrijLq7x23w==}
@@ -2107,7 +2107,7 @@ snapshots:
 
   '@inversifyjs/common@1.5.2': {}
 
-  '@inversifyjs/container@1.14.2(reflect-metadata@0.2.2)':
+  '@inversifyjs/container@1.14.3(reflect-metadata@0.2.2)':
     dependencies:
       '@inversifyjs/common': 1.5.2
       '@inversifyjs/core': 9.1.1(reflect-metadata@0.2.2)
@@ -2808,10 +2808,10 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
-  inversify@7.10.5(reflect-metadata@0.2.2):
+  inversify@7.10.6(reflect-metadata@0.2.2):
     dependencies:
       '@inversifyjs/common': 1.5.2
-      '@inversifyjs/container': 1.14.2(reflect-metadata@0.2.2)
+      '@inversifyjs/container': 1.14.3(reflect-metadata@0.2.2)
       '@inversifyjs/core': 9.1.1(reflect-metadata@0.2.2)
     transitivePeerDependencies:
       - reflect-metadata
