@@ -13,7 +13,7 @@ jobs:
       RAPID_API_HOST: ${{ secrets.RAPID_API_HOST }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
