@@ -22,7 +22,7 @@ importers:
         version: 4.1.0
       drizzle-orm:
         specifier: 0.45.1
-        version: 0.45.1(gel@2.0.2)(postgres@3.4.7)
+        version: 0.45.1(gel@2.0.2)(postgres@3.4.8)
       inversify:
         specifier: 7.10.8
         version: 7.10.8(reflect-metadata@0.2.2)
@@ -33,8 +33,8 @@ importers:
         specifier: 13.1.3
         version: 13.1.3
       postgres:
-        specifier: 3.4.7
-        version: 3.4.7
+        specifier: 3.4.8
+        version: 3.4.8
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1575,8 +1575,8 @@ packages:
     resolution: {integrity: sha512-0zZC2ygfdqvqK8zJIr1e+wT1T/L+LF6qvqvbzEQ6tiMAoTqEVK9a1K3YRu8HEUvGEvNqZyPJTtb2sNIoTkB83w==}
     hasBin: true
 
-  postgres@3.4.7:
-    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+  postgres@3.4.8:
+    resolution: {integrity: sha512-d+JFcLM17njZaOLkv6SCev7uoLaBtfK86vMUXhW1Z4glPWh4jozno9APvW/XKFJ3CCxVoC7OL38BqRydtu5nGg==}
     engines: {node: '>=12'}
 
   prelude-ls@1.2.1:
@@ -2525,10 +2525,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(gel@2.0.2)(postgres@3.4.7):
+  drizzle-orm@0.45.1(gel@2.0.2)(postgres@3.4.8):
     optionalDependencies:
       gel: 2.0.2
-      postgres: 3.4.7
+      postgres: 3.4.8
 
   dunder-proto@1.0.1:
     dependencies:
@@ -2778,7 +2778,7 @@ snapshots:
       '@petamoriken/float16': 3.9.2
       debug: 4.4.3
       env-paths: 3.0.0
-      semver: 7.7.2
+      semver: 7.7.3
       shell-quote: 1.8.3
       which: 4.0.0
     transitivePeerDependencies:
@@ -3047,7 +3047,7 @@ snapshots:
       sonic-boom: 4.2.0
       thread-stream: 3.1.0
 
-  postgres@3.4.7: {}
+  postgres@3.4.8: {}
 
   prelude-ls@1.2.1: {}
 
