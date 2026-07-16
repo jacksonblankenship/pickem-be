@@ -75,23 +75,35 @@ export const tank01GameStatusSchema = z.object({
 
 export type Tank01GameStatus = z.infer<typeof tank01GameStatusSchema>;
 
-const oddsSchema = z
-  .union([z.literal('even'), z.coerce.number()])
-  .transform(val => {
+const oddsSchema = z.preprocess(
+  val => {
+    // Normalize "even" values before union check
+    if (typeof val === 'string' && val.toLowerCase().trim() === 'even') {
+      return 'even';
+    }
+    return val;
+  },
+  z.union([z.literal('even'), z.coerce.number()]).transform(val => {
     // even odds are +100
     if (val === 'even') return 100;
-
     return val;
-  });
+  }),
+);
 
-const spreadSchema = z
-  .union([z.literal('PK'), z.coerce.number()])
-  .transform(val => {
+const spreadSchema = z.preprocess(
+  val => {
+    // Normalize "PK" values before union check
+    if (typeof val === 'string' && val.toUpperCase().trim() === 'PK') {
+      return 'PK';
+    }
+    return val;
+  },
+  z.union([z.literal('PK'), z.coerce.number()]).transform(val => {
     // a pick 'em spread is 0
     if (val === 'PK') return 0;
-
     return val;
-  });
+  }),
+);
 
 export const tank01GameOddsSchema = z.object({
   totalUnder: z.coerce.number(),
